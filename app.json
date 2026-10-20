@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "EcoPoints",
+    "slug": "ecopoints",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F7EAD9"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7EAD9"
+      },
+      "package": "com.nathalyalessa.ecopoints"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b7db0f6a-0042-4543-837d-4b6955a2d980"
+      }
+    },
+    "owner": "nathalyalessa",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b7db0f6a-0042-4543-837d-4b6955a2d980"
+    }
+  }
+}
