@@ -19,3 +19,16 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Arquivos de ambiente e credenciais
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.p12
+
+# Builds e arquivos gerados
+*.apk
+*.aab
