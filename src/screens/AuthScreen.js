@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -8,15 +9,23 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
 
+// Serviço de autenticação do Firebase
+import {
+  registerUser,
+  loginUser,
+  getAuthErrorMessage,
+} from '../services/authService';
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function AuthScreen({ navigation }) {
-  // isRegister controla se o formulário está no modo "criar conta" ou "entrar"
+export default function AuthScreen() {
+  // Controla o modo de login ou cadastro
   const [isRegister, setIsRegister] = useState(false);
 
   const [name, setName] = useState('');
@@ -25,32 +34,62 @@ export default function AuthScreen({ navigation }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // Validação dos campos do formulário
   function validate() {
     const newErrors = {};
 
     if (isRegister && name.trim().length < 3) {
       newErrors.name = 'Informe seu nome completo';
     }
+
     if (!EMAIL_REGEX.test(email.trim())) {
       newErrors.email = 'Informe um e-mail válido';
     }
+
     if (password.length < 6) {
-      newErrors.password = 'A senha deve ter no mínimo 6 caracteres';
+      newErrors.password =
+        'A senha deve ter no mínimo 6 caracteres';
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit() {
-    if (!validate()) return;
+  // Autenticação real com Firebase
+  async function handleSubmit() {
+    if (loading || !validate()) return;
 
     setLoading(true);
-    // Simula uma chamada de autenticação (não há backend nesta entrega)
-    setTimeout(() => {
+
+    try {
+      if (isRegister) {
+        // Cadastro de um novo usuário
+        await registerUser(name, email, password);
+      } else {
+        // Login de um usuário existente
+        await loginUser(email, password);
+      }
+
+      // A navegação é controlada pelo AuthContext
+      // e pelo AppNavigator.
+
+    } catch (error) {
+      setErrors({
+        general: getAuthErrorMessage(error),
+      });
+    } finally {
       setLoading(false);
-      navigation.replace('Home');
-    }, 700);
+    }
+  }
+
+  // Alterna entre login e cadastro
+  function handleSwitchMode() {
+    if (loading) return;
+
+    setErrors({});
+    setPassword('');
+    setIsRegister((prev) => !prev);
   }
 
   return (
@@ -64,11 +103,17 @@ export default function AuthScreen({ navigation }) {
       >
         <View style={styles.logoWrapper}>
           <View style={styles.logoCircle}>
-            <MaterialCommunityIcons name="sprout" size={40} color={colors.primaryDark} />
+            <MaterialCommunityIcons
+              name="sprout"
+              size={40}
+              color={colors.primaryDark}
+            />
           </View>
+
           <Text style={styles.title}>
             Eco<Text style={styles.titleAccent}>Points</Text>
           </Text>
+
           <Text style={styles.subtitle}>
             Recicle, acumule pontos e troque por benefícios reais
           </Text>
@@ -83,6 +128,7 @@ export default function AuthScreen({ navigation }) {
               onChangeText={setName}
               error={errors.name}
               autoCapitalize="words"
+              editable={!loading}
             />
           )}
 
@@ -93,6 +139,9 @@ export default function AuthScreen({ navigation }) {
             onChangeText={setEmail}
             error={errors.email}
             keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!loading}
           />
 
           <CustomInput
@@ -102,7 +151,28 @@ export default function AuthScreen({ navigation }) {
             onChangeText={setPassword}
             error={errors.password}
             secureTextEntry
+            autoCapitalize="none"
+            editable={!loading}
           />
+
+          {/* Mensagem de erro retornada pelo Firebase */}
+          {errors.general && (
+            <View style={styles.errorContainer}>
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={20}
+                color="#B3261E"
+              />
+
+              <Text
+                style={styles.generalError}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+              >
+                {errors.general}
+              </Text>
+            </View>
+          )}
 
           <CustomButton
             title={isRegister ? 'Criar conta' : 'Entrar'}
@@ -113,13 +183,21 @@ export default function AuthScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.switchMode}
-            onPress={() => {
-              setErrors({});
-              setIsRegister((prev) => !prev);
-            }}
+            onPress={handleSwitchMode}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isRegister
+                ? 'Entrar em uma conta existente'
+                : 'Criar uma nova conta'
+            }
+            accessibilityState={{ disabled: loading }}
           >
             <Text style={styles.switchModeText}>
-              {isRegister ? 'Já tem uma conta? ' : 'Ainda não tem conta? '}
+              {isRegister
+                ? 'Já tem uma conta? '
+                : 'Ainda não tem conta? '}
+
               <Text style={styles.switchModeAction}>
                 {isRegister ? 'Entrar' : 'Cadastre-se'}
               </Text>
@@ -132,14 +210,23 @@ export default function AuthScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+
   container: {
     flexGrow: 1,
     paddingHorizontal: 28,
     paddingTop: 80,
     paddingBottom: 40,
   },
-  logoWrapper: { alignItems: 'center', marginBottom: 36 },
+
+  logoWrapper: {
+    alignItems: 'center',
+    marginBottom: 36,
+  },
+
   logoCircle: {
     width: 84,
     height: 84,
@@ -151,12 +238,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+
   title: {
     fontSize: 28,
     fontWeight: '800',
     color: colors.accent,
   },
-  titleAccent: { color: colors.primary },
+
+  titleAccent: {
+    color: colors.primary,
+  },
+
   subtitle: {
     marginTop: 8,
     fontSize: 13,
@@ -164,12 +256,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
+
   form: {
     backgroundColor: colors.white + 'CC',
     borderRadius: 24,
     padding: 20,
   },
-  switchMode: { marginTop: 8, alignItems: 'center' },
-  switchModeText: { fontSize: 13, color: colors.textLight },
-  switchModeAction: { color: colors.primaryDark, fontWeight: '700' },
+
+  switchMode: {
+    marginTop: 8,
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  switchModeText: {
+    fontSize: 13,
+    color: colors.textLight,
+  },
+
+  switchModeAction: {
+    color: colors.primaryDark,
+    fontWeight: '700',
+  },
+
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FDECEA',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    gap: 8,
+  },
+
+  generalError: {
+    flex: 1,
+    color: '#B3261E',
+    fontSize: 13,
+    lineHeight: 19,
+  },
 });
