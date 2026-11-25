@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 
+import RecyclingScreen from '../screens/RecyclingScreen';
 import AuthScreen from '../screens/AuthScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CollectionPointsScreen from '../screens/CollectionPointsScreen';
@@ -18,7 +19,6 @@ import PointDetailsScreen from '../screens/PointDetailsScreen';
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
-// Navegação por abas inferiores
 function MainTabs() {
   return (
     <Tabs.Navigator
@@ -72,11 +72,9 @@ function MainTabs() {
   );
 }
 
-// Navegação principal com controle de autenticação
 export default function AppNavigator() {
   const { user, initializing } = useAuth();
 
-  // Aguarda a verificação da sessão pelo Firebase
   if (initializing) {
     return (
       <View
@@ -110,6 +108,10 @@ export default function AppNavigator() {
             <Stack.Screen
               name="PointDetails"
               component={PointDetailsScreen}
+            />
+            <Stack.Screen
+              name="Recycling"
+              component={RecyclingScreen}
             />
           </>
         ) : (

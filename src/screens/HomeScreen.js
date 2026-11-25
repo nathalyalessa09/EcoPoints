@@ -14,8 +14,6 @@ import { colors } from '../theme/colors';
 import { categories, currentUser } from '../data/mockData';
 import CategoryCard from '../components/CategoryCard';
 import CustomButton from '../components/CustomButton';
-
-// Integração com a autenticação
 import { useAuth } from '../contexts/AuthContext';
 import { logoutUser } from '../services/authService';
 
@@ -25,13 +23,11 @@ export default function HomeScreen({ navigation }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
 
-  // Nome do usuário autenticado no Firebase
   const userName =
     user?.displayName?.trim().split(/\s+/)[0] ||
     user?.email?.split('@')[0] ||
     'Usuário';
 
-  // Encerramento real da sessão
   async function handleLogout() {
     if (loggingOut) return;
 
@@ -148,6 +144,12 @@ export default function HomeScreen({ navigation }) {
             style={styles.actionButton}
           />
         </View>
+        <CustomButton
+          title="Minhas reciclagens"
+          variant="outline"
+          onPress={() => navigation.navigate('Recycling')}
+          style={{ marginBottom: 24 }}
+        />  
 
         {/* Categorias */}
         <Text style={styles.sectionTitle}>
